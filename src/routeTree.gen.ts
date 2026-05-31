@@ -9,9 +9,30 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OrdersIndexRouteImport } from './routes/orders.index'
+import { Route as RestaurantsIdRouteImport } from './routes/restaurants.$id'
+import { Route as OrdersIdRouteImport } from './routes/orders.$id'
 
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -22,35 +43,120 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrdersIndexRoute = OrdersIndexRouteImport.update({
+  id: '/orders/',
+  path: '/orders/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RestaurantsIdRoute = RestaurantsIdRouteImport.update({
+  id: '/restaurants/$id',
+  path: '/restaurants/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrdersIdRoute = OrdersIdRouteImport.update({
+  id: '/orders/$id',
+  path: '/orders/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/checkout': typeof CheckoutRoute
+  '/notifications': typeof NotificationsRoute
+  '/profile': typeof ProfileRoute
+  '/orders/$id': typeof OrdersIdRoute
+  '/restaurants/$id': typeof RestaurantsIdRoute
+  '/orders/': typeof OrdersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/checkout': typeof CheckoutRoute
+  '/notifications': typeof NotificationsRoute
+  '/profile': typeof ProfileRoute
+  '/orders/$id': typeof OrdersIdRoute
+  '/restaurants/$id': typeof RestaurantsIdRoute
+  '/orders': typeof OrdersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/checkout': typeof CheckoutRoute
+  '/notifications': typeof NotificationsRoute
+  '/profile': typeof ProfileRoute
+  '/orders/$id': typeof OrdersIdRoute
+  '/restaurants/$id': typeof RestaurantsIdRoute
+  '/orders/': typeof OrdersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/checkout'
+    | '/notifications'
+    | '/profile'
+    | '/orders/$id'
+    | '/restaurants/$id'
+    | '/orders/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth'
-  id: '__root__' | '/' | '/auth'
+  to:
+    | '/'
+    | '/auth'
+    | '/checkout'
+    | '/notifications'
+    | '/profile'
+    | '/orders/$id'
+    | '/restaurants/$id'
+    | '/orders'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/checkout'
+    | '/notifications'
+    | '/profile'
+    | '/orders/$id'
+    | '/restaurants/$id'
+    | '/orders/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  CheckoutRoute: typeof CheckoutRoute
+  NotificationsRoute: typeof NotificationsRoute
+  ProfileRoute: typeof ProfileRoute
+  OrdersIdRoute: typeof OrdersIdRoute
+  RestaurantsIdRoute: typeof RestaurantsIdRoute
+  OrdersIndexRoute: typeof OrdersIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -65,12 +171,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/orders/': {
+      id: '/orders/'
+      path: '/orders'
+      fullPath: '/orders/'
+      preLoaderRoute: typeof OrdersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/restaurants/$id': {
+      id: '/restaurants/$id'
+      path: '/restaurants/$id'
+      fullPath: '/restaurants/$id'
+      preLoaderRoute: typeof RestaurantsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/orders/$id': {
+      id: '/orders/$id'
+      path: '/orders/$id'
+      fullPath: '/orders/$id'
+      preLoaderRoute: typeof OrdersIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  CheckoutRoute: CheckoutRoute,
+  NotificationsRoute: NotificationsRoute,
+  ProfileRoute: ProfileRoute,
+  OrdersIdRoute: OrdersIdRoute,
+  RestaurantsIdRoute: RestaurantsIdRoute,
+  OrdersIndexRoute: OrdersIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
