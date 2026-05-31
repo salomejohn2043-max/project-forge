@@ -53,7 +53,7 @@ function OrderTrackPage() {
 
   if (!order) return <div className="min-h-screen bg-background"><AppHeader /><div className="p-8">Loading…</div></div>;
 
-  const stepIndex = STEPS.indexOf(order.status as any);
+  const stepIndex = order.status ? STEPS.indexOf(order.status as typeof STEPS[number]) : -1;
 
   return (
     <div className="min-h-screen bg-background">
