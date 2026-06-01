@@ -907,7 +907,7 @@ export type Database = {
       payment_option: "30" | "50" | "100"
       payment_status: "partial" | "complete" | "refunded" | "partially_refunded"
       promotion_status: "pending" | "approved" | "rejected" | "expired"
-      restaurant_status: "active" | "suspended"
+      restaurant_status: "pending" | "active" | "suspended"
       rider_status: "pending" | "approved" | "suspended"
       transaction_type: "payment" | "refund" | "disbursement" | "commission"
       user_role: "customer" | "rider" | "restaurant_admin" | "admin"
@@ -1065,7 +1065,7 @@ export const Constants = {
       payment_option: ["30", "50", "100"],
       payment_status: ["partial", "complete", "refunded", "partially_refunded"],
       promotion_status: ["pending", "approved", "rejected", "expired"],
-      restaurant_status: ["active", "suspended"],
+      restaurant_status: ["pending", "active", "suspended"],
       rider_status: ["pending", "approved", "suspended"],
       transaction_type: ["payment", "refund", "disbursement", "commission"],
       user_role: ["customer", "rider", "restaurant_admin", "admin"],
