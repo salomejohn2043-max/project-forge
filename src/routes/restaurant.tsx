@@ -332,7 +332,7 @@ function RegisterRestaurant({ ownerId, onCreated }: { ownerId: string; onCreated
     if (!name || !phone || !address) { toast.error("Fill required fields"); return; }
     setBusy(true);
     const { error } = await supabase.from("restaurants").insert({
-      owner_id: ownerId, name, phone, address, description, status: "pending",
+      owner_id: ownerId, name, phone, address, description, status: "suspended" as any,
     });
     setBusy(false);
     if (error) toast.error(error.message);
