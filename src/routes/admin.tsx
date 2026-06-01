@@ -89,7 +89,7 @@ function RestaurantsTab({ onChange }: { onChange: () => void }) {
     queryFn: async () => (await supabase.from("restaurants").select("*, users!restaurants_owner_id_fkey(full_name,email)").order("created_at", { ascending: false })).data ?? [],
   });
   const setStatus = async (id: string, status: string) => {
-    await supabase.from("restaurants").update({ status }).eq("id", id);
+    await supabase.from("restaurants").update({ status: status as any }).eq("id", id);
     qc.invalidateQueries({ queryKey: ["admin-restaurants"] }); onChange();
     toast.success(`Status: ${status}`);
   };
@@ -175,7 +175,7 @@ function UsersTab() {
     queryFn: async () => (await supabase.from("users").select("*").order("created_at", { ascending: false }).limit(200)).data ?? [],
   });
   const setRole = async (id: string, role: string) => {
-    await supabase.from("users").update({ role }).eq("id", id);
+    await supabase.from("users").update({ role: role as any }).eq("id", id);
     qc.invalidateQueries({ queryKey: ["admin-users"] }); toast.success("Role updated");
   };
   return (

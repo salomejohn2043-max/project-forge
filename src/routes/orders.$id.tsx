@@ -67,7 +67,7 @@ function OrderTrackPage() {
 
         <div className="rounded-xl border bg-card p-5">
           <div className="text-sm font-medium text-muted-foreground">Status</div>
-          <div className="mt-1 text-xl font-semibold text-primary">{statusLabel[order.status]}</div>
+          <div className="mt-1 text-xl font-semibold text-primary">{statusLabel[order.status ?? "pending"]}</div>
 
           <ol className="mt-5 space-y-2">
             {STEPS.map((s, i) => (

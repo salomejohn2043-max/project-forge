@@ -83,7 +83,7 @@ function RiderDashboard() {
   };
 
   const advance = async (o: any, next: string) => {
-    const { error } = await supabase.from("orders").update({ status: next }).eq("id", o.id);
+    const { error } = await supabase.from("orders").update({ status: next as any }).eq("id", o.id);
     if (error) toast.error(error.message); else toast.success(statusLabel[next]);
   };
 
