@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/lib/cart";
 import { getSettings, KES } from "@/lib/settings";
 import { toast } from "sonner";
+import { GoogleMap } from "@/components/google-map";
+import { haversineKm, useGeolocation } from "@/lib/geo";
 
 export const Route = createFileRoute("/restaurants/$id")({
   component: RestaurantPage,
