@@ -85,6 +85,8 @@ function CheckoutPage() {
         customer_id: user.id,
         restaurant_id: cart.restaurant_id,
         delivery_address: address,
+        delivery_lat: loc.lat,
+        delivery_lng: loc.lng,
         delivery_distance_km: distanceKm,
         delivery_fee: deliveryFee,
         subtotal,
