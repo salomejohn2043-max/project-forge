@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Bike, MapPin, Phone, CheckCircle2 } from "lucide-react";
+import { Bike, MapPin, Phone, CheckCircle2, Upload, ClockIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "@/components/app-header";
 import { RequireRole } from "@/components/require-role";
@@ -29,6 +29,27 @@ function RiderDashboard() {
     enabled: !!user,
     queryFn: async () => (await supabase.from("rider_profiles").select("*").eq("user_id", user!.id).maybeSingle()).data,
   });
+
+  // Live location ping when online
+  useEffect(() => {
+    if (!rp?.is_online || rp.status !== "approved") return;
+    if (!navigator.geolocation) return;
+    const send = () => {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          await supabase.from("rider_profiles").update({
+            current_lat: pos.coords.latitude,
+            current_lng: pos.coords.longitude,
+          }).eq("id", rp.id);
+        },
+        () => {},
+        { enableHighAccuracy: true, maximumAge: 10000 }
+      );
+    };
+    send();
+    const t = setInterval(send, 15000);
+    return () => clearInterval(t);
+  }, [rp?.is_online, rp?.status, rp?.id]);
 
   const { data: available = [] } = useQuery({
     queryKey: ["available-orders"],
@@ -61,9 +82,21 @@ function RiderDashboard() {
       <div className="min-h-screen bg-background">
         <AppHeader />
         <div className="container mx-auto max-w-lg p-8 text-center">
-          <Bike className="mx-auto h-10 w-10 text-primary" />
-          <h1 className="mt-3 text-2xl font-bold">Awaiting approval</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Status: <Badge>{rp.status}</Badge></p>
+          <ClockIcon className="mx-auto h-10 w-10 text-primary" />
+          <h1 className="mt-3 text-2xl font-bold">Awaiting verification</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Your rider application is being reviewed by the admin. You'll get access to the dashboard once approved.
+          </p>
+          <div className="mt-4 rounded-xl border bg-card p-4 text-left text-sm">
+            <div className="flex items-center justify-between"><span className="text-muted-foreground">Status</span><Badge>{rp.status}</Badge></div>
+            <div className="mt-2 flex items-center justify-between"><span className="text-muted-foreground">Vehicle</span><span>{rp.vehicle_type} · {rp.vehicle_plate}</span></div>
+            <div className="mt-2 flex items-center justify-between"><span className="text-muted-foreground">ID number</span><span>{rp.id_number}</span></div>
+            {rp.rejection_reason && (
+              <div className="mt-3 rounded bg-destructive/10 p-2 text-xs text-destructive">
+                <strong>Rejected:</strong> {rp.rejection_reason}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -120,7 +153,7 @@ function RiderDashboard() {
           </TabsList>
 
           <TabsContent value="available" className="space-y-3">
-            {!rp.is_online && <p className="text-sm text-warning">Go online to accept orders.</p>}
+            {!rp.is_online && <p className="text-sm text-warning">Go online to accept orders. Your location is shared with admin while online.</p>}
             {available.length === 0 ? <p className="text-sm text-muted-foreground">No deliveries right now.</p> :
               available.map((o: any) => <DeliveryCard key={o.id} order={o} actionLabel="Accept" onAction={() => accept(o)} />)}
           </TabsContent>
@@ -163,7 +196,7 @@ function DeliveryCard({ order, actionLabel, onAction }: { order: any; actionLabe
         <a href={`tel:${order.users?.phone}`} className="mt-1 inline-flex items-center gap-1 text-primary"><Phone className="h-3 w-3" />{order.users?.phone}</a>
       </div>
       <div className="mt-3 flex items-center justify-between text-sm">
-        <span className="text-muted-foreground">{order.delivery_distance_km || "?"} km · Total {KES(Number(order.total_amount))}</span>
+        <span className="text-muted-foreground">{order.delivery_distance_km ? `${Number(order.delivery_distance_km).toFixed(1)} km` : "?"} · Total {KES(Number(order.total_amount))}</span>
         <span className="font-semibold">Payout {KES(Number(order.rider_payout || 0))}</span>
       </div>
       {order.amount_remaining > 0 && <p className="mt-1 text-xs text-warning">Collect {KES(order.amount_remaining)} on delivery</p>}
@@ -178,18 +211,45 @@ function RiderOnboarding({ userId, onCreated }: { userId: string; onCreated: () 
   const [vehicleType, setVehicleType] = useState("boda");
   const [vehiclePlate, setVehiclePlate] = useState("");
   const [idNumber, setIdNumber] = useState("");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const pickFile = (f: File | null) => {
+    setPhotoFile(f);
+    if (f) {
+      const r = new FileReader();
+      r.onload = () => setPhotoPreview(r.result as string);
+      r.readAsDataURL(f);
+    } else setPhotoPreview(null);
+  };
 
   const submit = async () => {
     if (!idNumber || !vehiclePlate) { toast.error("Fill all fields"); return; }
+    if (!photoFile) { toast.error("Upload your full-body photo"); return; }
     setBusy(true);
-    // promote user to rider role
-    await supabase.from("users").update({ role: "rider" }).eq("id", userId);
-    const { error } = await supabase.from("rider_profiles").insert({
-      user_id: userId, vehicle_type: vehicleType, vehicle_plate: vehiclePlate, id_number: idNumber, status: "pending",
-    });
-    setBusy(false);
-    if (error) toast.error(error.message); else { toast.success("Submitted! Awaiting approval."); onCreated(); }
+    try {
+      // Upload photo
+      const ext = photoFile.name.split(".").pop() || "jpg";
+      const path = `${userId}/full-body-${Date.now()}.${ext}`;
+      const up = await supabase.storage.from("rider-photos").upload(path, photoFile, { upsert: true });
+      if (up.error) throw up.error;
+      const { data: signed } = await supabase.storage.from("rider-photos").createSignedUrl(path, 60 * 60 * 24 * 365);
+      const photoUrl = signed?.signedUrl ?? path;
+
+      // promote user to rider role
+      await supabase.from("users").update({ role: "rider" }).eq("id", userId);
+      const { error } = await supabase.from("rider_profiles").insert({
+        user_id: userId, vehicle_type: vehicleType, vehicle_plate: vehiclePlate, id_number: idNumber,
+        status: "pending", full_body_photo_url: photoUrl,
+      });
+      if (error) throw error;
+      toast.success("Submitted! Awaiting admin verification.");
+      onCreated();
+    } catch (e: any) {
+      toast.error(e.message ?? "Upload failed");
+    } finally { setBusy(false); }
   };
 
   return (
@@ -205,7 +265,23 @@ function RiderOnboarding({ userId, onCreated }: { userId: string; onCreated: () 
         <div><Label>Vehicle type</Label><Input value={vehicleType} onChange={(e) => setVehicleType(e.target.value)} placeholder="boda / motorbike / bicycle" /></div>
         <div><Label>Vehicle plate</Label><Input value={vehiclePlate} onChange={(e) => setVehiclePlate(e.target.value)} /></div>
         <div><Label>National ID number</Label><Input value={idNumber} onChange={(e) => setIdNumber(e.target.value)} /></div>
-        <Button onClick={submit} disabled={busy} className="w-full">{busy ? "Submitting…" : "Submit application"}</Button>
+
+        <div>
+          <Label>Full-body photo *</Label>
+          <p className="mb-2 text-xs text-muted-foreground">
+            Stand facing the camera. <strong>No glasses, no caps, no masks</strong> — your face must be clearly visible.
+          </p>
+          <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden"
+            onChange={(e) => pickFile(e.target.files?.[0] ?? null)} />
+          <Button type="button" variant="outline" onClick={() => fileRef.current?.click()} className="w-full gap-2">
+            <Upload className="h-4 w-4" />{photoFile ? "Change photo" : "Upload photo"}
+          </Button>
+          {photoPreview && (
+            <img src={photoPreview} alt="preview" className="mt-3 max-h-64 rounded-lg border object-contain" />
+          )}
+        </div>
+
+        <Button onClick={submit} disabled={busy} className="w-full">{busy ? "Submitting…" : "Submit for verification"}</Button>
       </div>
     </div>
   );
