@@ -557,6 +557,7 @@ export type Database = {
           opening_time: string | null
           owner_id: string
           phone: string
+          rejection_reason: string | null
           status: Database["public"]["Enums"]["restaurant_status"] | null
           total_orders: number | null
           updated_at: string | null
@@ -577,6 +578,7 @@ export type Database = {
           opening_time?: string | null
           owner_id: string
           phone: string
+          rejection_reason?: string | null
           status?: Database["public"]["Enums"]["restaurant_status"] | null
           total_orders?: number | null
           updated_at?: string | null
@@ -597,6 +599,7 @@ export type Database = {
           opening_time?: string | null
           owner_id?: string
           phone?: string
+          rejection_reason?: string | null
           status?: Database["public"]["Enums"]["restaurant_status"] | null
           total_orders?: number | null
           updated_at?: string | null
@@ -687,10 +690,12 @@ export type Database = {
           created_at: string | null
           current_lat: number | null
           current_lng: number | null
+          full_body_photo_url: string | null
           id: string
           id_document_url: string | null
           id_number: string
           is_online: boolean | null
+          rejection_reason: string | null
           status: Database["public"]["Enums"]["rider_status"] | null
           total_deliveries: number | null
           updated_at: string | null
@@ -705,10 +710,12 @@ export type Database = {
           created_at?: string | null
           current_lat?: number | null
           current_lng?: number | null
+          full_body_photo_url?: string | null
           id?: string
           id_document_url?: string | null
           id_number: string
           is_online?: boolean | null
+          rejection_reason?: string | null
           status?: Database["public"]["Enums"]["rider_status"] | null
           total_deliveries?: number | null
           updated_at?: string | null
@@ -723,10 +730,12 @@ export type Database = {
           created_at?: string | null
           current_lat?: number | null
           current_lng?: number | null
+          full_body_photo_url?: string | null
           id?: string
           id_document_url?: string | null
           id_number?: string
           is_online?: boolean | null
+          rejection_reason?: string | null
           status?: Database["public"]["Enums"]["rider_status"] | null
           total_deliveries?: number | null
           updated_at?: string | null
@@ -817,6 +826,9 @@ export type Database = {
           is_active: boolean | null
           is_email_verified: boolean | null
           is_phone_verified: boolean | null
+          last_lat: number | null
+          last_lng: number | null
+          last_location_name: string | null
           loyalty_points: number | null
           phone: string | null
           profile_photo_url: string | null
@@ -834,6 +846,9 @@ export type Database = {
           is_active?: boolean | null
           is_email_verified?: boolean | null
           is_phone_verified?: boolean | null
+          last_lat?: number | null
+          last_lng?: number | null
+          last_location_name?: string | null
           loyalty_points?: number | null
           phone?: string | null
           profile_photo_url?: string | null
@@ -851,6 +866,9 @@ export type Database = {
           is_active?: boolean | null
           is_email_verified?: boolean | null
           is_phone_verified?: boolean | null
+          last_lat?: number | null
+          last_lng?: number | null
+          last_location_name?: string | null
           loyalty_points?: number | null
           phone?: string | null
           profile_photo_url?: string | null
