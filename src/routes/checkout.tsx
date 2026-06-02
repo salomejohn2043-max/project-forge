@@ -10,6 +10,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useCart } from "@/lib/cart";
 import { useAuth } from "@/lib/auth";
 import { getSettings, KES } from "@/lib/settings";
+import { LocationPicker } from "@/components/location-picker";
+import { haversineKm } from "@/lib/geo";
 
 export const Route = createFileRoute("/checkout")({ component: CheckoutPage });
 
@@ -18,11 +20,23 @@ function CheckoutPage() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [address, setAddress] = useState("");
-  const [distanceKm, setDistanceKm] = useState(3);
+  const [loc, setLoc] = useState<{ lat: number | null; lng: number | null; name: string }>({ lat: null, lng: null, name: "" });
+  const [restLoc, setRestLoc] = useState<{ lat: number | null; lng: number | null }>({ lat: null, lng: null });
   const [paymentOption, setPaymentOption] = useState<"30" | "50" | "100">("100");
   const [deliveryFee, setDeliveryFee] = useState(50);
   const [busy, setBusy] = useState(false);
   const [settings, setSettings] = useState({ markup_percentage: 10, restaurant_commission_percentage: 5, rider_commission_percentage: 5, delivery_fee_per_km: 30, min_delivery_fee: 50 });
+
+  // pull restaurant location
+  useEffect(() => {
+    if (!cart.restaurant_id) return;
+    supabase.from("restaurants").select("lat,lng").eq("id", cart.restaurant_id).single()
+      .then(({ data }) => { if (data) setRestLoc({ lat: data.lat as any, lng: data.lng as any }); });
+  }, [cart.restaurant_id]);
+
+  const distanceKm = (loc.lat != null && loc.lng != null && restLoc.lat != null && restLoc.lng != null)
+    ? haversineKm({ lat: loc.lat, lng: loc.lng }, { lat: Number(restLoc.lat), lng: Number(restLoc.lng) })
+    : 3;
 
   useEffect(() => {
     getSettings().then((s) => {
