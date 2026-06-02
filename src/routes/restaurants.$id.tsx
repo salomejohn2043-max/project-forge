@@ -121,6 +121,13 @@ function RestaurantPage() {
   );
 }
 
+function DistanceLine({ restaurant }: { restaurant: any }) {
+  const { coords } = useGeolocation(true);
+  if (!coords || restaurant.lat == null || restaurant.lng == null) return null;
+  const d = haversineKm(coords, { lat: Number(restaurant.lat), lng: Number(restaurant.lng) });
+  return <p className="mt-1 text-xs text-primary">{d.toFixed(1)} km from your location</p>;
+}
+
 function CategorySection({ title, items, restaurantId, restaurantName, markup, open }: any) {
   const cart = useCart();
   if (items.length === 0) return null;
