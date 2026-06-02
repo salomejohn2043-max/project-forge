@@ -136,16 +136,18 @@ function CheckoutPage() {
           <h1 className="text-2xl font-bold">Checkout</h1>
 
           <section className="rounded-xl border bg-card p-4">
-            <h2 className="mb-3 font-semibold">Delivery</h2>
+            <h2 className="mb-3 font-semibold">Delivery location</h2>
             <div className="space-y-3">
+              <LocationPicker
+                value={loc}
+                onChange={(v) => { setLoc(v); if (!address) setAddress(v.name); }}
+              />
               <div className="space-y-1.5">
-                <Label htmlFor="addr">Address</Label>
-                <Input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="e.g. Daraja Mbili, opposite KCB" />
+                <Label htmlFor="addr">Delivery notes / address</Label>
+                <Input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="e.g. Daraja Mbili, opposite KCB — gate 3" />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="dist">Distance from restaurant (km)</Label>
-                <Input id="dist" type="number" min={1} step={0.5} value={distanceKm} onChange={(e) => setDistanceKm(Number(e.target.value) || 1)} />
-                <p className="text-xs text-muted-foreground">Fee = max({KES(settings.min_delivery_fee)}, {KES(settings.delivery_fee_per_km)}/km × distance)</p>
+              <div className="rounded-lg bg-muted p-3 text-xs">
+                Distance from restaurant: <strong>{distanceKm.toFixed(2)} km</strong> · Delivery fee: <strong>{KES(deliveryFee)}</strong>
               </div>
             </div>
           </section>
