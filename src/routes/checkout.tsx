@@ -10,6 +10,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useCart } from "@/lib/cart";
 import { useAuth } from "@/lib/auth";
 import { getSettings, KES } from "@/lib/settings";
+import { LocationPicker } from "@/components/location-picker";
+import { haversineKm } from "@/lib/geo";
 
 export const Route = createFileRoute("/checkout")({ component: CheckoutPage });
 
@@ -18,11 +20,23 @@ function CheckoutPage() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [address, setAddress] = useState("");
-  const [distanceKm, setDistanceKm] = useState(3);
+  const [loc, setLoc] = useState<{ lat: number | null; lng: number | null; name: string }>({ lat: null, lng: null, name: "" });
+  const [restLoc, setRestLoc] = useState<{ lat: number | null; lng: number | null }>({ lat: null, lng: null });
   const [paymentOption, setPaymentOption] = useState<"30" | "50" | "100">("100");
   const [deliveryFee, setDeliveryFee] = useState(50);
   const [busy, setBusy] = useState(false);
   const [settings, setSettings] = useState({ markup_percentage: 10, restaurant_commission_percentage: 5, rider_commission_percentage: 5, delivery_fee_per_km: 30, min_delivery_fee: 50 });
+
+  // pull restaurant location
+  useEffect(() => {
+    if (!cart.restaurant_id) return;
+    supabase.from("restaurants").select("lat,lng").eq("id", cart.restaurant_id).single()
+      .then(({ data }) => { if (data) setRestLoc({ lat: data.lat as any, lng: data.lng as any }); });
+  }, [cart.restaurant_id]);
+
+  const distanceKm = (loc.lat != null && loc.lng != null && restLoc.lat != null && restLoc.lng != null)
+    ? haversineKm({ lat: loc.lat, lng: loc.lng }, { lat: Number(restLoc.lat), lng: Number(restLoc.lng) })
+    : 3;
 
   useEffect(() => {
     getSettings().then((s) => {
@@ -54,6 +68,7 @@ function CheckoutPage() {
 
   const placeOrder = async () => {
     if (!address.trim()) { toast.error("Enter delivery address"); return; }
+    if (loc.lat == null || loc.lng == null) { toast.error("Detect or set your location"); return; }
     if (!cart.restaurant_id) return;
 
     setBusy(true);
@@ -70,6 +85,8 @@ function CheckoutPage() {
         customer_id: user.id,
         restaurant_id: cart.restaurant_id,
         delivery_address: address,
+        delivery_lat: loc.lat,
+        delivery_lng: loc.lng,
         delivery_distance_km: distanceKm,
         delivery_fee: deliveryFee,
         subtotal,
@@ -119,16 +136,18 @@ function CheckoutPage() {
           <h1 className="text-2xl font-bold">Checkout</h1>
 
           <section className="rounded-xl border bg-card p-4">
-            <h2 className="mb-3 font-semibold">Delivery</h2>
+            <h2 className="mb-3 font-semibold">Delivery location</h2>
             <div className="space-y-3">
+              <LocationPicker
+                value={loc}
+                onChange={(v) => { setLoc(v); if (!address) setAddress(v.name); }}
+              />
               <div className="space-y-1.5">
-                <Label htmlFor="addr">Address</Label>
-                <Input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="e.g. Daraja Mbili, opposite KCB" />
+                <Label htmlFor="addr">Delivery notes / address</Label>
+                <Input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="e.g. Daraja Mbili, opposite KCB — gate 3" />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="dist">Distance from restaurant (km)</Label>
-                <Input id="dist" type="number" min={1} step={0.5} value={distanceKm} onChange={(e) => setDistanceKm(Number(e.target.value) || 1)} />
-                <p className="text-xs text-muted-foreground">Fee = max({KES(settings.min_delivery_fee)}, {KES(settings.delivery_fee_per_km)}/km × distance)</p>
+              <div className="rounded-lg bg-muted p-3 text-xs">
+                Distance from restaurant: <strong>{distanceKm.toFixed(2)} km</strong> · Delivery fee: <strong>{KES(deliveryFee)}</strong>
               </div>
             </div>
           </section>
