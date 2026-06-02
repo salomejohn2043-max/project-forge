@@ -70,6 +70,7 @@ function RestaurantPage() {
           <div>
             <h1 className="text-3xl font-bold">{restaurant.name}</h1>
             <p className="mt-1 text-sm text-muted-foreground"><MapPin className="mr-1 inline h-3 w-3" />{restaurant.address}</p>
+            <DistanceLine restaurant={restaurant} />
             {restaurant.description && <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{restaurant.description}</p>}
           </div>
           <div className="flex flex-col items-end gap-2">
@@ -81,6 +82,16 @@ function RestaurantPage() {
             </span>
           </div>
         </div>
+
+        {restaurant.lat != null && restaurant.lng != null && (
+          <div className="mt-4">
+            <GoogleMap
+              center={{ lat: Number(restaurant.lat), lng: Number(restaurant.lng) }}
+              markers={[{ id: "r", lat: Number(restaurant.lat), lng: Number(restaurant.lng), color: "restaurant", title: restaurant.name }]}
+              height={200}
+            />
+          </div>
+        )}
 
         <div className="mt-8 space-y-8 pb-32">
           {categories.map((c: any) => (
