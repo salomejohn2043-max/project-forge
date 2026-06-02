@@ -68,6 +68,7 @@ function CheckoutPage() {
 
   const placeOrder = async () => {
     if (!address.trim()) { toast.error("Enter delivery address"); return; }
+    if (loc.lat == null || loc.lng == null) { toast.error("Detect or set your location"); return; }
     if (!cart.restaurant_id) return;
 
     setBusy(true);
