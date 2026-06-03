@@ -85,6 +85,8 @@ function RestaurantPage() {
             </span>
           </div>
         </div>
+        <GroupOrderCTA restaurantId={id} restaurantName={restaurant.name} open={restaurant.is_open} />
+
 
         {restaurant.lat != null && restaurant.lng != null && (
           <div className="mt-4">
