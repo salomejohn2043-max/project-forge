@@ -268,7 +268,7 @@ async function maybeConfirmGroup(admin: any, groupId: string) {
   }).eq("id", groupId);
 
   await admin.from("notifications").insert(members.map((m: any) => ({
-    user_id: m.user_id, type: "order_placed", title: "Group order confirmed!",
+    user_id: m.user_id, type: "order_confirmed", title: "Group order confirmed!",
     body: "Your group order is on its way to the restaurant.", order_id: order.id,
   })));
 }
@@ -358,7 +358,7 @@ async function refundAndCancelGroup(admin: any, groupId: string, reason: string)
         is_confirmed: true, confirmed_at: new Date().toISOString(),
       });
       await admin.from("notifications").insert({
-        user_id: m.user_id, type: "order_placed", title: "Group order refunded",
+        user_id: m.user_id, type: "refund_issued", title: "Group order refunded",
         body: `KES ${m.amount_paid_upfront} returned to your wallet. ${reason}`,
       });
     }
