@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Star, MapPin, Plus, Minus } from "lucide-react";
+import { Star, MapPin, Plus, Minus, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "@/components/app-header";
@@ -11,6 +11,9 @@ import { getSettings, KES } from "@/lib/settings";
 import { toast } from "sonner";
 import { GoogleMap } from "@/components/google-map";
 import { haversineKm, useGeolocation } from "@/lib/geo";
+import { useServerFn } from "@tanstack/react-start";
+import { createGroupOrder } from "@/lib/group-orders.functions";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/restaurants/$id")({
   component: RestaurantPage,
