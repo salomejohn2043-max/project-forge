@@ -20,6 +20,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as OrdersIndexRouteImport } from './routes/orders.index'
 import { Route as RestaurantsIdRouteImport } from './routes/restaurants.$id'
 import { Route as OrdersIdRouteImport } from './routes/orders.$id'
+import { Route as GroupCodeRouteImport } from './routes/group.$code'
 import { Route as ApiPublicGroupOrdersTickRouteImport } from './routes/api/public/group-orders/tick'
 
 const RiderRoute = RiderRouteImport.update({
@@ -77,6 +78,11 @@ const OrdersIdRoute = OrdersIdRouteImport.update({
   path: '/orders/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GroupCodeRoute = GroupCodeRouteImport.update({
+  id: '/group/$code',
+  path: '/group/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicGroupOrdersTickRoute =
   ApiPublicGroupOrdersTickRouteImport.update({
     id: '/api/public/group-orders/tick',
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/restaurant': typeof RestaurantRoute
   '/rider': typeof RiderRoute
+  '/group/$code': typeof GroupCodeRoute
   '/orders/$id': typeof OrdersIdRoute
   '/restaurants/$id': typeof RestaurantsIdRoute
   '/orders/': typeof OrdersIndexRoute
@@ -107,6 +114,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/restaurant': typeof RestaurantRoute
   '/rider': typeof RiderRoute
+  '/group/$code': typeof GroupCodeRoute
   '/orders/$id': typeof OrdersIdRoute
   '/restaurants/$id': typeof RestaurantsIdRoute
   '/orders': typeof OrdersIndexRoute
@@ -122,6 +130,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/restaurant': typeof RestaurantRoute
   '/rider': typeof RiderRoute
+  '/group/$code': typeof GroupCodeRoute
   '/orders/$id': typeof OrdersIdRoute
   '/restaurants/$id': typeof RestaurantsIdRoute
   '/orders/': typeof OrdersIndexRoute
@@ -138,6 +147,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/restaurant'
     | '/rider'
+    | '/group/$code'
     | '/orders/$id'
     | '/restaurants/$id'
     | '/orders/'
@@ -152,6 +162,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/restaurant'
     | '/rider'
+    | '/group/$code'
     | '/orders/$id'
     | '/restaurants/$id'
     | '/orders'
@@ -166,6 +177,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/restaurant'
     | '/rider'
+    | '/group/$code'
     | '/orders/$id'
     | '/restaurants/$id'
     | '/orders/'
@@ -181,6 +193,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   RestaurantRoute: typeof RestaurantRoute
   RiderRoute: typeof RiderRoute
+  GroupCodeRoute: typeof GroupCodeRoute
   OrdersIdRoute: typeof OrdersIdRoute
   RestaurantsIdRoute: typeof RestaurantsIdRoute
   OrdersIndexRoute: typeof OrdersIndexRoute
@@ -266,6 +279,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrdersIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/group/$code': {
+      id: '/group/$code'
+      path: '/group/$code'
+      fullPath: '/group/$code'
+      preLoaderRoute: typeof GroupCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/group-orders/tick': {
       id: '/api/public/group-orders/tick'
       path: '/api/public/group-orders/tick'
@@ -285,6 +305,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   RestaurantRoute: RestaurantRoute,
   RiderRoute: RiderRoute,
+  GroupCodeRoute: GroupCodeRoute,
   OrdersIdRoute: OrdersIdRoute,
   RestaurantsIdRoute: RestaurantsIdRoute,
   OrdersIndexRoute: OrdersIndexRoute,
