@@ -14,6 +14,194 @@ export type Database = {
   }
   public: {
     Tables: {
+      group_order_items: {
+        Row: {
+          base_price: number
+          created_at: string
+          group_order_id: string
+          id: string
+          marked_up_price: number
+          member_id: string
+          menu_item_id: string
+          name: string
+          quantity: number
+          subtotal: number
+        }
+        Insert: {
+          base_price: number
+          created_at?: string
+          group_order_id: string
+          id?: string
+          marked_up_price: number
+          member_id: string
+          menu_item_id: string
+          name: string
+          quantity?: number
+          subtotal: number
+        }
+        Update: {
+          base_price?: number
+          created_at?: string
+          group_order_id?: string
+          id?: string
+          marked_up_price?: number
+          member_id?: string
+          menu_item_id?: string
+          name?: string
+          quantity?: number
+          subtotal?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_order_items_group_order_id_fkey"
+            columns: ["group_order_id"]
+            isOneToOne: false
+            referencedRelation: "group_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_order_items_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "group_order_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_order_members: {
+        Row: {
+          amount_paid_upfront: number
+          amount_remaining: number
+          delivery_share: number
+          drop_reason: string | null
+          group_order_id: string
+          id: string
+          is_creator: boolean
+          joined_at: string
+          paid_at: string | null
+          payment_option: number | null
+          payment_status: Database["public"]["Enums"]["group_member_payment_status"]
+          removed_at: string | null
+          subtotal: number
+          total_due: number
+          user_id: string
+        }
+        Insert: {
+          amount_paid_upfront?: number
+          amount_remaining?: number
+          delivery_share?: number
+          drop_reason?: string | null
+          group_order_id: string
+          id?: string
+          is_creator?: boolean
+          joined_at?: string
+          paid_at?: string | null
+          payment_option?: number | null
+          payment_status?: Database["public"]["Enums"]["group_member_payment_status"]
+          removed_at?: string | null
+          subtotal?: number
+          total_due?: number
+          user_id: string
+        }
+        Update: {
+          amount_paid_upfront?: number
+          amount_remaining?: number
+          delivery_share?: number
+          drop_reason?: string | null
+          group_order_id?: string
+          id?: string
+          is_creator?: boolean
+          joined_at?: string
+          paid_at?: string | null
+          payment_option?: number | null
+          payment_status?: Database["public"]["Enums"]["group_member_payment_status"]
+          removed_at?: string | null
+          subtotal?: number
+          total_due?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_order_members_group_order_id_fkey"
+            columns: ["group_order_id"]
+            isOneToOne: false
+            referencedRelation: "group_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_orders: {
+        Row: {
+          base_delivery_fee: number
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          created_at: string
+          creator_decision_deadline: string | null
+          creator_id: string
+          delivery_address: string
+          delivery_discount_pct: number
+          delivery_distance_km: number | null
+          delivery_lat: number | null
+          delivery_lng: number | null
+          discounted_delivery_fee: number
+          final_order_id: string | null
+          id: string
+          invite_code: string
+          lock_at: string
+          locked_at: string | null
+          payment_deadline: string | null
+          restaurant_id: string
+          status: Database["public"]["Enums"]["group_order_status"]
+          updated_at: string
+        }
+        Insert: {
+          base_delivery_fee?: number
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          creator_decision_deadline?: string | null
+          creator_id: string
+          delivery_address: string
+          delivery_discount_pct?: number
+          delivery_distance_km?: number | null
+          delivery_lat?: number | null
+          delivery_lng?: number | null
+          discounted_delivery_fee?: number
+          final_order_id?: string | null
+          id?: string
+          invite_code: string
+          lock_at: string
+          locked_at?: string | null
+          payment_deadline?: string | null
+          restaurant_id: string
+          status?: Database["public"]["Enums"]["group_order_status"]
+          updated_at?: string
+        }
+        Update: {
+          base_delivery_fee?: number
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          creator_decision_deadline?: string | null
+          creator_id?: string
+          delivery_address?: string
+          delivery_discount_pct?: number
+          delivery_distance_km?: number | null
+          delivery_lat?: number | null
+          delivery_lng?: number | null
+          discounted_delivery_fee?: number
+          final_order_id?: string | null
+          id?: string
+          invite_code?: string
+          lock_at?: string
+          locked_at?: string | null
+          payment_deadline?: string | null
+          restaurant_id?: string
+          status?: Database["public"]["Enums"]["group_order_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       loyalty_redemptions: {
         Row: {
           created_at: string | null
@@ -898,8 +1086,21 @@ export type Database = {
         Returns: Database["public"]["Enums"]["user_role"]
       }
       is_admin: { Args: { uid: string }; Returns: boolean }
+      is_group_member: {
+        Args: { _group_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
+      group_member_payment_status: "pending" | "paid" | "failed" | "dropped"
+      group_order_status:
+        | "open"
+        | "locked"
+        | "paying"
+        | "awaiting_creator"
+        | "confirmed"
+        | "cancelled"
+        | "completed"
       notification_type:
         | "order_placed"
         | "order_confirmed"
@@ -1056,6 +1257,16 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      group_member_payment_status: ["pending", "paid", "failed", "dropped"],
+      group_order_status: [
+        "open",
+        "locked",
+        "paying",
+        "awaiting_creator",
+        "confirmed",
+        "cancelled",
+        "completed",
+      ],
       notification_type: [
         "order_placed",
         "order_confirmed",
