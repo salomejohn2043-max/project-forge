@@ -20,6 +20,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as OrdersIndexRouteImport } from './routes/orders.index'
 import { Route as RestaurantsIdRouteImport } from './routes/restaurants.$id'
 import { Route as OrdersIdRouteImport } from './routes/orders.$id'
+import { Route as ApiPublicGroupOrdersTickRouteImport } from './routes/api/public/group-orders/tick'
 
 const RiderRoute = RiderRouteImport.update({
   id: '/rider',
@@ -76,6 +77,12 @@ const OrdersIdRoute = OrdersIdRouteImport.update({
   path: '/orders/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicGroupOrdersTickRoute =
+  ApiPublicGroupOrdersTickRouteImport.update({
+    id: '/api/public/group-orders/tick',
+    path: '/api/public/group-orders/tick',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -89,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/orders/$id': typeof OrdersIdRoute
   '/restaurants/$id': typeof RestaurantsIdRoute
   '/orders/': typeof OrdersIndexRoute
+  '/api/public/group-orders/tick': typeof ApiPublicGroupOrdersTickRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -102,6 +110,7 @@ export interface FileRoutesByTo {
   '/orders/$id': typeof OrdersIdRoute
   '/restaurants/$id': typeof RestaurantsIdRoute
   '/orders': typeof OrdersIndexRoute
+  '/api/public/group-orders/tick': typeof ApiPublicGroupOrdersTickRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -116,6 +125,7 @@ export interface FileRoutesById {
   '/orders/$id': typeof OrdersIdRoute
   '/restaurants/$id': typeof RestaurantsIdRoute
   '/orders/': typeof OrdersIndexRoute
+  '/api/public/group-orders/tick': typeof ApiPublicGroupOrdersTickRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -131,6 +141,7 @@ export interface FileRouteTypes {
     | '/orders/$id'
     | '/restaurants/$id'
     | '/orders/'
+    | '/api/public/group-orders/tick'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -144,6 +155,7 @@ export interface FileRouteTypes {
     | '/orders/$id'
     | '/restaurants/$id'
     | '/orders'
+    | '/api/public/group-orders/tick'
   id:
     | '__root__'
     | '/'
@@ -157,6 +169,7 @@ export interface FileRouteTypes {
     | '/orders/$id'
     | '/restaurants/$id'
     | '/orders/'
+    | '/api/public/group-orders/tick'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -171,6 +184,7 @@ export interface RootRouteChildren {
   OrdersIdRoute: typeof OrdersIdRoute
   RestaurantsIdRoute: typeof RestaurantsIdRoute
   OrdersIndexRoute: typeof OrdersIndexRoute
+  ApiPublicGroupOrdersTickRoute: typeof ApiPublicGroupOrdersTickRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -252,6 +266,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrdersIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/group-orders/tick': {
+      id: '/api/public/group-orders/tick'
+      path: '/api/public/group-orders/tick'
+      fullPath: '/api/public/group-orders/tick'
+      preLoaderRoute: typeof ApiPublicGroupOrdersTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -267,7 +288,18 @@ const rootRouteChildren: RootRouteChildren = {
   OrdersIdRoute: OrdersIdRoute,
   RestaurantsIdRoute: RestaurantsIdRoute,
   OrdersIndexRoute: OrdersIndexRoute,
+  ApiPublicGroupOrdersTickRoute: ApiPublicGroupOrdersTickRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
