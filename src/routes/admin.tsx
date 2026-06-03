@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Check, X } from "lucide-react";
+import { Check, X, Eye, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "@/components/app-header";
 import { RequireRole } from "@/components/require-role";
@@ -14,6 +14,9 @@ import { KES } from "@/lib/settings";
 import { statusLabel } from "@/lib/format";
 import { clearSettingsCache } from "@/lib/settings";
 import { useState } from "react";
+import { MenuOCRUpload } from "@/components/admin/menu-ocr-upload";
+import { RiderLiveMap } from "@/components/admin/rider-live-map";
+import { OrderDetailModal } from "@/components/admin/order-detail-modal";
 
 export const Route = createFileRoute("/admin")({
   component: () => <RequireRole roles={["admin"]}><AdminDashboard /></RequireRole>,
@@ -21,6 +24,8 @@ export const Route = createFileRoute("/admin")({
 
 function AdminDashboard() {
   const qc = useQueryClient();
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [orderModalOpen, setOrderModalOpen] = useState(false);
 
   const { data: stats } = useQuery({
     queryKey: ["admin-stats"],
@@ -49,31 +54,54 @@ function AdminDashboard() {
     <div className="min-h-screen bg-background">
       <AppHeader />
       <div className="container mx-auto space-y-6 p-4 md:p-8">
-        <h1 className="text-2xl font-bold">Admin dashboard</h1>
+        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="Total orders" value={stats?.orderCount ?? 0} />
-          <Stat label="Platform revenue" value={KES(stats?.revenue ?? 0)} />
+          <Stat label="Total Orders" value={stats?.orderCount ?? 0} />
+          <Stat label="Platform Revenue" value={KES(stats?.revenue ?? 0)} />
           <Stat label="Users" value={stats?.users ?? 0} />
           <Stat label="Restaurants" value={`${stats?.restaurants ?? 0} (${stats?.pendingRestaurants ?? 0} pending)`} />
         </div>
 
-        <Tabs defaultValue="restaurants">
-          <TabsList>
+        <Tabs defaultValue="restaurants" className="w-full">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="restaurants">Restaurants</TabsTrigger>
             <TabsTrigger value="riders">Riders</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
+            <TabsTrigger value="map">Map</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="restaurants"><RestaurantsTab onChange={() => qc.invalidateQueries({ queryKey: ["admin-stats"] })} /></TabsContent>
-          <TabsContent value="riders"><RidersTab onChange={() => qc.invalidateQueries({ queryKey: ["admin-stats"] })} /></TabsContent>
-          <TabsContent value="orders"><OrdersTab /></TabsContent>
-          <TabsContent value="users"><UsersTab /></TabsContent>
-          <TabsContent value="settings"><SettingsTab /></TabsContent>
+          <TabsContent value="restaurants">
+            <RestaurantsTab onChange={() => qc.invalidateQueries({ queryKey: ["admin-stats"] })} />
+          </TabsContent>
+          <TabsContent value="riders">
+            <RidersTab onChange={() => qc.invalidateQueries({ queryKey: ["admin-stats"] })} />
+          </TabsContent>
+          <TabsContent value="orders">
+            <OrdersTab onSelectOrder={(id) => {
+              setSelectedOrderId(id);
+              setOrderModalOpen(true);
+            }} />
+          </TabsContent>
+          <TabsContent value="map">
+            <RiderLiveMap height="h-96" />
+          </TabsContent>
+          <TabsContent value="users">
+            <UsersTab />
+          </TabsContent>
+          <TabsContent value="settings">
+            <SettingsTab />
+          </TabsContent>
         </Tabs>
       </div>
+
+      <OrderDetailModal
+        orderId={selectedOrderId}
+        open={orderModalOpen}
+        onOpenChange={setOrderModalOpen}
+      />
     </div>
   );
 }
@@ -94,14 +122,15 @@ function RestaurantsTab({ onChange }: { onChange: () => void }) {
     toast.success(`Status: ${status}`);
   };
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {data.map((r: any) => (
         <div key={r.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-4">
           <div>
             <div className="font-semibold">{r.name} <Badge variant="secondary" className="ml-2">{r.status}</Badge></div>
             <div className="text-xs text-muted-foreground">{r.users?.full_name} · {r.phone} · {r.address}</div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <MenuOCRUpload restaurantId={r.id} restaurantName={r.name} onSuccess={() => qc.invalidateQueries({ queryKey: ["admin-restaurants"] })} />
             {r.status !== "active" && <Button size="sm" onClick={() => setStatus(r.id, "active")} className="gap-1"><Check className="h-4 w-4" />Approve</Button>}
             {r.status !== "suspended" && <Button size="sm" variant="outline" onClick={() => setStatus(r.id, "suspended")} className="gap-1"><X className="h-4 w-4" />Suspend</Button>}
           </div>
@@ -141,16 +170,16 @@ function RidersTab({ onChange }: { onChange: () => void }) {
   );
 }
 
-function OrdersTab() {
+function OrdersTab({ onSelectOrder }: { onSelectOrder: (id: string) => void }) {
   const { data = [] } = useQuery({
     queryKey: ["admin-orders"],
-    queryFn: async () => (await supabase.from("orders").select("*, restaurants(name), users!orders_customer_id_fkey(full_name)").order("created_at", { ascending: false }).limit(100)).data ?? [],
+    queryFn: async () => (await supabase.from("orders").select("*, restaurants(name), users!orders_customer_id_fkey(full_name), rider_profiles(users(full_name))").order("created_at", { ascending: false }).limit(100)).data ?? [],
   });
   return (
     <div className="overflow-x-auto rounded-xl border bg-card">
       <table className="w-full text-sm">
         <thead className="bg-muted text-left">
-          <tr><th className="p-3">Order</th><th className="p-3">Customer</th><th className="p-3">Restaurant</th><th className="p-3">Total</th><th className="p-3">Status</th></tr>
+          <tr><th className="p-3">Order</th><th className="p-3">Customer</th><th className="p-3">Restaurant</th><th className="p-3">Total</th><th className="p-3">Status</th><th className="p-3">Action</th></tr>
         </thead>
         <tbody>
           {data.map((o: any) => (
@@ -160,6 +189,11 @@ function OrdersTab() {
               <td className="p-3">{o.restaurants?.name}</td>
               <td className="p-3">{KES(Number(o.total_amount))}</td>
               <td className="p-3"><Badge variant="secondary">{statusLabel[o.status]}</Badge></td>
+              <td className="p-3">
+                <Button size="sm" variant="ghost" onClick={() => onSelectOrder(o.id)} className="gap-1">
+                  <Eye className="h-4 w-4" /> View
+                </Button>
+              </td>
             </tr>
           ))}
         </tbody>
