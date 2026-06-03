@@ -186,7 +186,7 @@ async function lockGroupInternal(admin: any, groupId: string, requesterId: strin
 
   // Notify members
   await admin.from("notifications").insert(members!.map((m: any) => ({
-    user_id: m.user_id, type: "order_update", title: "Group order locked",
+    user_id: m.user_id, type: "order_placed", title: "Group order locked",
     body: `Pay your share within ${s.payMin} minutes to confirm the order.`,
   })));
 
@@ -268,7 +268,7 @@ async function maybeConfirmGroup(admin: any, groupId: string) {
   }).eq("id", groupId);
 
   await admin.from("notifications").insert(members.map((m: any) => ({
-    user_id: m.user_id, type: "order_update", title: "Group order confirmed!",
+    user_id: m.user_id, type: "order_placed", title: "Group order confirmed!",
     body: "Your group order is on its way to the restaurant.", order_id: order.id,
   })));
 }
@@ -326,7 +326,7 @@ export async function reconcileGroupOrdersTick() {
         creator_decision_deadline: new Date(Date.now() + s.decisionMin * 60_000).toISOString(),
       }).eq("id", g.id);
       await supabaseAdmin.from("notifications").insert({
-        user_id: g.creator_id, type: "order_update", title: "Group below minimum",
+        user_id: g.creator_id, type: "order_placed", title: "Group below minimum",
         body: `Only ${paid.length} member(s) paid. Decide to proceed or cancel within ${s.decisionMin} minutes.`,
       });
     }
@@ -358,7 +358,7 @@ async function refundAndCancelGroup(admin: any, groupId: string, reason: string)
         is_confirmed: true, confirmed_at: new Date().toISOString(),
       });
       await admin.from("notifications").insert({
-        user_id: m.user_id, type: "order_update", title: "Group order refunded",
+        user_id: m.user_id, type: "order_placed", title: "Group order refunded",
         body: `KES ${m.amount_paid_upfront} returned to your wallet. ${reason}`,
       });
     }
