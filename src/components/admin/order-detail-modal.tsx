@@ -101,7 +101,7 @@ export function OrderDetailModal({
       const { error } = await supabase
         .from("orders")
         .update({ status: "cancelled" })
-        .eq("id", orderId);
+        .eq("id", orderId!);
 
       if (error) throw error;
       toast.success("Order cancelled");
