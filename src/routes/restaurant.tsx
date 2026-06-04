@@ -199,6 +199,12 @@ function MenuManager({ restaurantId }: { restaurantId: string }) {
 
   return (
     <div className="space-y-6">
+      <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
+        <h3 className="mb-1 font-semibold">Quick setup: Upload menu photo</h3>
+        <p className="mb-3 text-xs text-muted-foreground">Snap a photo of your printed menu — AI will extract items for you to review.</p>
+        <MenuOCRUpload restaurantId={restaurantId} restaurantName="Your menu" onSuccess={() => { qc.invalidateQueries({ queryKey: ["items", restaurantId] }); qc.invalidateQueries({ queryKey: ["cats", restaurantId] }); }} />
+      </div>
+
       <div className="rounded-xl border bg-card p-4">
         <h3 className="mb-3 font-semibold">Categories</h3>
         <div className="flex gap-2">
