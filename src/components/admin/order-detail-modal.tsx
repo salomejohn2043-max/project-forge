@@ -22,11 +22,10 @@ interface OrderDetailModalProps {
 
 interface OrderDetail {
   id: string;
-  order_number: string;
   status: string;
   customer_id: string;
   restaurant_id: string;
-  rider_id?: string;
+  rider_id?: string | null;
   delivery_address: string;
   total_amount: number;
   subtotal: number;
@@ -38,21 +37,21 @@ interface OrderDetail {
   rider_payout: number;
   amount_paid_upfront: number;
   amount_remaining: number;
-  payment_method: string;
-  mpesa_reference?: string;
+  mpesa_reference?: string | null;
   is_disbursed: boolean;
   created_at: string;
   updated_at: string;
-  
+
   // Relations
-  customer?: { full_name: string; phone: string; email: string };
-  restaurant?: { name: string; phone: string; address: string };
-  rider?: { user_id: string; users?: { full_name: string; phone: string } };
+  customer?: { full_name: string; phone: string; email: string } | null;
+  restaurant?: { name: string; phone: string; address: string } | null;
+  rider?: { user_id: string; users?: { full_name: string; phone: string } } | null;
   order_items?: Array<{
     menu_item_id: string;
     quantity: number;
-    price_per_unit: number;
-    menu_items?: { name: string };
+    marked_up_price: number;
+    name: string;
+    subtotal: number;
   }>;
 }
 
