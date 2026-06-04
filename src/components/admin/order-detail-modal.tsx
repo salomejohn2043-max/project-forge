@@ -22,11 +22,10 @@ interface OrderDetailModalProps {
 
 interface OrderDetail {
   id: string;
-  order_number: string;
   status: string;
   customer_id: string;
   restaurant_id: string;
-  rider_id?: string;
+  rider_id?: string | null;
   delivery_address: string;
   total_amount: number;
   subtotal: number;
@@ -38,21 +37,21 @@ interface OrderDetail {
   rider_payout: number;
   amount_paid_upfront: number;
   amount_remaining: number;
-  payment_method: string;
-  mpesa_reference?: string;
+  mpesa_reference?: string | null;
   is_disbursed: boolean;
   created_at: string;
   updated_at: string;
-  
+
   // Relations
-  customer?: { full_name: string; phone: string; email: string };
-  restaurant?: { name: string; phone: string; address: string };
-  rider?: { user_id: string; users?: { full_name: string; phone: string } };
+  customer?: { full_name: string; phone: string; email: string } | null;
+  restaurant?: { name: string; phone: string; address: string } | null;
+  rider?: { user_id: string; users?: { full_name: string; phone: string } } | null;
   order_items?: Array<{
     menu_item_id: string;
     quantity: number;
-    price_per_unit: number;
-    menu_items?: { name: string };
+    marked_up_price: number;
+    name: string;
+    subtotal: number;
   }>;
 }
 
@@ -68,15 +67,14 @@ export function OrderDetailModal({
       const { data } = await supabase
         .from("orders")
         .select(
-          `*, 
-          customer:users!orders_customer_id_fkey(*), 
+          `*,
+          customer:users!orders_customer_id_fkey(*),
           restaurant:restaurants(*),
-          rider:rider_profiles(*),
-          order_items(*, menu_items(name))`
+          order_items(*)`
         )
         .eq("id", orderId)
         .single();
-      return data as OrderDetail;
+      return data as unknown as OrderDetail;
     },
     enabled: open && !!orderId,
   });
@@ -87,7 +85,7 @@ export function OrderDetailModal({
       const { error } = await supabase
         .from("orders")
         .update({ is_disbursed: true })
-        .eq("id", orderId);
+        .eq("id", orderId!);
 
       if (error) throw error;
       toast.success("Order disbursed");
@@ -103,7 +101,7 @@ export function OrderDetailModal({
       const { error } = await supabase
         .from("orders")
         .update({ status: "cancelled" })
-        .eq("id", orderId);
+        .eq("id", orderId!);
 
       if (error) throw error;
       toast.success("Order cancelled");
@@ -118,7 +116,7 @@ export function OrderDetailModal({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
-            <span>Order #{order?.order_number || "..."}</span>
+            <span>Order #{order?.id.slice(0, 6) || "..."}</span>
             {order && (
               <Badge variant="secondary">
                 {statusLabel[order.status] || order.status}
@@ -190,13 +188,13 @@ export function OrderDetailModal({
                     className="flex items-center justify-between text-sm rounded-lg border p-2"
                   >
                     <div>
-                      <div className="font-medium">{item.menu_items?.name}</div>
+                      <div className="font-medium">{item.name}</div>
                       <div className="text-xs text-muted-foreground">
-                        Qty: {item.quantity} × {KES(item.price_per_unit)}
+                        Qty: {item.quantity} × {KES(item.marked_up_price)}
                       </div>
                     </div>
                     <div className="font-semibold">
-                      {KES(item.quantity * item.price_per_unit)}
+                      {KES(item.subtotal)}
                     </div>
                   </div>
                 ))}
