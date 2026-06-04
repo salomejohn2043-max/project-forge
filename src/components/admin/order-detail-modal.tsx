@@ -67,15 +67,14 @@ export function OrderDetailModal({
       const { data } = await supabase
         .from("orders")
         .select(
-          `*, 
-          customer:users!orders_customer_id_fkey(*), 
+          `*,
+          customer:users!orders_customer_id_fkey(*),
           restaurant:restaurants(*),
-          rider:rider_profiles(*),
-          order_items(*, menu_items(name))`
+          order_items(*)`
         )
         .eq("id", orderId)
         .single();
-      return data as OrderDetail;
+      return data as unknown as OrderDetail;
     },
     enabled: open && !!orderId,
   });
