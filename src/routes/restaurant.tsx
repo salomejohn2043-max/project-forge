@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { KES } from "@/lib/settings";
 import { statusLabel } from "@/lib/format";
+import { MenuOCRUpload } from "@/components/admin/menu-ocr-upload";
 
 export const Route = createFileRoute("/restaurant")({
   component: () => (
