@@ -28,6 +28,7 @@ Rules:
 - Return valid JSON, no markdown fences, no commentary.`;
 
 export const extractMenuFromImage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => Input.parse(input))
   .handler(async ({ data }) => {
     const key = process.env.LOVABLE_API_KEY;
