@@ -5,12 +5,12 @@ export const Route = createFileRoute("/api/public/group-orders/tick")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const expected = process.env.CRON_SECRET;
+        if (!expected) {
+          return new Response("Cron secret not configured", { status: 503 });
+        }
         const provided = request.headers.get("x-cron-secret");
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { data } = await supabaseAdmin
-          .from("platform_settings").select("value").eq("key", "cron_secret").maybeSingle();
-        const expected = data?.value;
-        if (!expected || provided !== expected) {
+        if (provided !== expected) {
           return new Response("Unauthorized", { status: 401 });
         }
         const result = await reconcileGroupOrdersTick();
