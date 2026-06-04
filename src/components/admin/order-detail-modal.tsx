@@ -85,7 +85,7 @@ export function OrderDetailModal({
       const { error } = await supabase
         .from("orders")
         .update({ is_disbursed: true })
-        .eq("id", orderId);
+        .eq("id", orderId!);
 
       if (error) throw error;
       toast.success("Order disbursed");
