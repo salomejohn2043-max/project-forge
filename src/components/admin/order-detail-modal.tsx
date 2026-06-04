@@ -188,13 +188,13 @@ export function OrderDetailModal({
                     className="flex items-center justify-between text-sm rounded-lg border p-2"
                   >
                     <div>
-                      <div className="font-medium">{item.menu_items?.name}</div>
+                      <div className="font-medium">{item.name}</div>
                       <div className="text-xs text-muted-foreground">
-                        Qty: {item.quantity} × {KES(item.price_per_unit)}
+                        Qty: {item.quantity} × {KES(item.marked_up_price)}
                       </div>
                     </div>
                     <div className="font-semibold">
-                      {KES(item.quantity * item.price_per_unit)}
+                      {KES(item.subtotal)}
                     </div>
                   </div>
                 ))}
