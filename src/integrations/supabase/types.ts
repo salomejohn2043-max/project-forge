@@ -271,6 +271,13 @@ export type Database = {
             foreignKeyName: "menu_categories_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
+            referencedRelation: "restaurant_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_categories_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
             referencedRelation: "restaurants"
             referencedColumns: ["id"]
           },
@@ -322,6 +329,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "menu_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_items_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant_public"
             referencedColumns: ["id"]
           },
           {
@@ -563,6 +577,13 @@ export type Database = {
             foreignKeyName: "orders_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
+            referencedRelation: "restaurant_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
             referencedRelation: "restaurants"
             referencedColumns: ["id"]
           },
@@ -675,6 +696,13 @@ export type Database = {
             columns: ["menu_item_id"]
             isOneToOne: false
             referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotions_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant_public"
             referencedColumns: ["id"]
           },
           {
@@ -852,6 +880,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: true
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant_public"
             referencedColumns: ["id"]
           },
           {
@@ -1078,7 +1113,63 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      restaurant_public: {
+        Row: {
+          address: string | null
+          average_rating: number | null
+          closing_time: string | null
+          cover_image_url: string | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          is_open: boolean | null
+          lat: number | null
+          lng: number | null
+          logo_url: string | null
+          name: string | null
+          opening_time: string | null
+          status: Database["public"]["Enums"]["restaurant_status"] | null
+          total_orders: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          average_rating?: number | null
+          closing_time?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          is_open?: boolean | null
+          lat?: number | null
+          lng?: number | null
+          logo_url?: string | null
+          name?: string | null
+          opening_time?: string | null
+          status?: Database["public"]["Enums"]["restaurant_status"] | null
+          total_orders?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          average_rating?: number | null
+          closing_time?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          is_open?: boolean | null
+          lat?: number | null
+          lng?: number | null
+          logo_url?: string | null
+          name?: string | null
+          opening_time?: string | null
+          status?: Database["public"]["Enums"]["restaurant_status"] | null
+          total_orders?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_user_role: {
