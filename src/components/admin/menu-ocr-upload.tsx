@@ -1,12 +1,43 @@
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Upload, Loader2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { parseMenuImage, groupItemsByCategory, type OCRMenuItem } from "@/lib/ocr";
+import { extractMenuFromImage } from "@/lib/menu-ocr.functions";
 import { Input } from "@/components/ui/input";
+
+interface OCRMenuItem {
+  name: string;
+  description?: string;
+  price?: number;
+  category: string;
+}
+
+function groupItemsByCategory(items: OCRMenuItem[]): Record<string, OCRMenuItem[]> {
+  return items.reduce(
+    (acc, item) => {
+      if (!acc[item.category]) acc[item.category] = [];
+      acc[item.category].push(item);
+      return acc;
+    },
+    {} as Record<string, OCRMenuItem[]>
+  );
+}
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result ?? "");
+      resolve(result.includes(",") ? result.split(",")[1] : result);
+    };
+    reader.onerror = () => reject(new Error("Could not read image file"));
+    reader.readAsDataURL(file);
+  });
+}
 
 interface MenuOCRUploadProps {
   restaurantId: string;
@@ -15,6 +46,7 @@ interface MenuOCRUploadProps {
 }
 
 export function MenuOCRUpload({ restaurantId, restaurantName, onSuccess }: MenuOCRUploadProps) {
+  const extractMenu = useServerFn(extractMenuFromImage);
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -34,15 +66,22 @@ export function MenuOCRUpload({ restaurantId, restaurantName, onSuccess }: MenuO
     setFile(selectedFile);
 
     try {
-      const result = await parseMenuImage(selectedFile);
-      if (result.success && result.items.length > 0) {
-        setParsedItems(result.items);
+      const imageBase64 = await fileToBase64(selectedFile);
+      const result = await extractMenu({ data: { imageBase64, mimeType: selectedFile.type || "image/jpeg" } });
+      const items = result.categories.flatMap((category) =>
+        category.items.map((item) => ({ ...item, category: category.name }))
+      );
+      if (items.length > 0) {
+        setParsedItems(items);
         setStep("review");
-        toast.success(`Detected ${result.items.length} menu items`);
+        toast.success(`Detected ${items.length} menu items`);
       } else {
-        toast.error(result.error || "Could not parse menu image");
+        toast.error("Could not parse menu image");
         setFile(null);
       }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not parse menu image");
+      setFile(null);
     } finally {
       setLoading(false);
     }
