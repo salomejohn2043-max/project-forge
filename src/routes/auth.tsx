@@ -119,9 +119,20 @@ function SignUpForm() {
       });
       if (error) throw error;
 
-      const uid = data.user?.id;
+      // RLS on restaurants/rider_profiles requires auth.uid(); make sure a session exists.
+      let session = data.session;
+      if (!session) {
+        const { data: signInData, error: signInErr } =
+          await supabase.auth.signInWithPassword({ email, password });
+        if (signInErr) {
+          toast.success("Account created! Please confirm your email, then sign in to finish setup.");
+          return;
+        }
+        session = signInData.session;
+      }
+
+      const uid = session?.user?.id ?? data.user?.id;
       if (uid) {
-        // ensure profile row reflects what we got
         await supabase.from("users").update({ full_name: fullName, phone, role }).eq("id", uid);
 
         if (role === "rider") {
@@ -137,7 +148,7 @@ function SignUpForm() {
           if (rErr) throw rErr;
         }
       }
-      toast.success("Account created! You can sign in now.");
+      toast.success("Account created!");
     } catch (err: any) {
       toast.error(err?.message ?? "Sign up failed");
     } finally {
