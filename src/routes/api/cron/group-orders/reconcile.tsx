@@ -10,7 +10,7 @@ import {
   validateCronRequest,
   executeCronJobWithTimeout,
   cronResponse,
-} from '../../lib/cron';
+} from '../../../lib/cron';
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,

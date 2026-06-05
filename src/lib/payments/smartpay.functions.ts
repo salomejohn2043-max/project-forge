@@ -49,3 +49,5 @@ export const initiateSmartPayPush = createServerFn({ method: "POST" })
 
     const json = await res.json();
     return { success: true, simulated: false, ...json };
+  });
+
