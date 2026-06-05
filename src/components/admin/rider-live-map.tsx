@@ -18,14 +18,16 @@ export function RiderLiveMap({ height = "h-96", compact = false }: RiderLiveMapP
   useEffect(() => {
     if (mapLoaded) return;
 
-    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    const apiKey = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
+    const channel = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
     if (!apiKey) {
       setMapError("Google Maps API key not configured");
       return;
     }
 
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&loading=async${channel ? `&channel=${channel}` : ""}`;
+    script.async = true;
     script.onload = () => setMapLoaded(true);
     script.onerror = () => setMapError("Failed to load Google Maps");
     document.head.appendChild(script);
