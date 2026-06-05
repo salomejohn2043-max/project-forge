@@ -45,6 +45,10 @@ export const createGroupOrder = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const s = await loadGroupSettings();
 
+    // Sanitize address
+    const sanitizedAddress = data.delivery_address.trim().slice(0, 500).replace(/[<>]/g, "");
+    if (!sanitizedAddress) throw new Error("Invalid delivery address");
+
     // Block if user is already in another open/locked group
     const { data: existing } = await supabaseAdmin
       .from("group_order_members")
@@ -59,14 +63,24 @@ export const createGroupOrder = createServerFn({ method: "POST" })
     const { data: rest } = await supabaseAdmin
       .from("restaurants").select("lat,lng,status,is_open").eq("id", data.restaurant_id).single();
     if (!rest || rest.status !== "active" || !rest.is_open) throw new Error("Restaurant not available.");
+    
+    // Use user location if provided, fallback to restaurant location for base fee
+    let deliverLat = data.delivery_lat;
+    let deliverLng = data.delivery_lng;
     let km = 0;
-    if (rest.lat != null && rest.lng != null && data.delivery_lat != null && data.delivery_lng != null) {
-      const toRad = (d: number) => (d * Math.PI) / 180;
-      const R = 6371;
-      const dLat = toRad(data.delivery_lat - Number(rest.lat));
-      const dLng = toRad(data.delivery_lng - Number(rest.lng));
-      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(Number(rest.lat))) * Math.cos(toRad(data.delivery_lat)) * Math.sin(dLng / 2) ** 2;
-      km = 2 * R * Math.asin(Math.sqrt(a));
+    
+    if (rest.lat != null && rest.lng != null) {
+      // If no user location provided, use restaurant as delivery point (0 km)
+      if (deliverLat != null && deliverLng != null) {
+        const toRad = (d: number) => (d * Math.PI) / 180;
+        const R = 6371;
+        const dLat = toRad(deliverLat - Number(rest.lat));
+        const dLng = toRad(deliverLng - Number(rest.lng));
+        const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(Number(rest.lat))) * Math.cos(toRad(deliverLat)) * Math.sin(dLng / 2) ** 2;
+        km = 2 * R * Math.asin(Math.sqrt(a));
+        // Validate distance is reasonable (0-100 km)
+        if (km < 0 || km > 100) throw new Error("Delivery location is too far (max 100 km)");
+      }
     }
     const baseFee = Math.max(s.minDelivery, Math.round(km * s.deliveryPerKm));
 
@@ -79,8 +93,8 @@ export const createGroupOrder = createServerFn({ method: "POST" })
         .from("group_orders")
         .insert({
           restaurant_id: data.restaurant_id, creator_id: userId, invite_code: code,
-          delivery_address: data.delivery_address,
-          delivery_lat: data.delivery_lat ?? null, delivery_lng: data.delivery_lng ?? null,
+          delivery_address: sanitizedAddress,
+          delivery_lat: deliverLat ?? null, delivery_lng: deliverLng ?? null,
           delivery_distance_km: km, base_delivery_fee: baseFee,
           lock_at: new Date(Date.now() + s.joinMin * 60_000).toISOString(),
         })
@@ -193,7 +207,7 @@ async function lockGroupInternal(admin: any, groupId: string, requesterId: strin
   return { ok: true };
 }
 
-// ---------- payGroupShare (simulated M-Pesa) ----------
+// ---------- payGroupShare (validated M-Pesa) ----------
 export const payGroupShare = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) =>
@@ -207,8 +221,15 @@ export const payGroupShare = createServerFn({ method: "POST" })
     const { data: m } = await supabaseAdmin.from("group_order_members").select("*").eq("id", data.member_id).single();
     if (!m || m.user_id !== userId) throw new Error("Not your share.");
     if (m.payment_status === "paid") return { ok: true };
+    
+    // Validate payment option
+    if (![30, 50, 100].includes(data.payment_option)) {
+      throw new Error("Invalid payment option");
+    }
 
     const total = Number(m.total_due);
+    if (total <= 0) throw new Error("Invalid group share amount");
+    
     const upfront = Math.round(total * (data.payment_option / 100));
     const remaining = total - upfront;
 

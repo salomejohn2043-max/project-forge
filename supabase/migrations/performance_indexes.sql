@@ -39,8 +39,7 @@ CREATE INDEX IF NOT EXISTS idx_menu_items_available ON menu_items(is_available);
 
 -- Group orders — time-based expiry queries
 CREATE INDEX IF NOT EXISTS idx_group_orders_status ON group_orders(status);
-CREATE INDEX IF NOT EXISTS idx_group_orders_created ON group_orders(created_at);
-CREATE INDEX IF NOT EXISTS idx_group_orders_lock_window ON group_orders(status, lock_window_end);
+CREATE INDEX IF NOT EXISTS idx_group_orders_created ON group_orders(created_at DESC);
 
 -- Transactions — reporting & reconciliation
 CREATE INDEX IF NOT EXISTS idx_transactions_type ON transactions(type);
@@ -88,3 +87,17 @@ CREATE INDEX IF NOT EXISTS idx_notifications_by_user_read
 -- ✓ Cache static data (platform_settings, restaurant lists)
 -- ✓ Use React Query's staleTime to reduce API calls
 -- ✓ Batch multiple small queries into one RPC call if possible
+
+-- ============================================================
+-- UPDATE QUERY PLANNER STATISTICS
+-- ============================================================
+
+-- Run ANALYZE after creating indexes so PostgreSQL knows about them
+ANALYZE orders;
+ANALYZE notifications;
+ANALYZE rider_profiles;
+ANALYZE restaurants;
+ANALYZE menu_items;
+ANALYZE group_orders;
+ANALYZE transactions;
+ANALYZE users;

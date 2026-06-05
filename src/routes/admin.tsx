@@ -114,28 +114,49 @@ function RestaurantsTab({ onChange }: { onChange: () => void }) {
   const qc = useQueryClient();
   const { data = [] } = useQuery({
     queryKey: ["admin-restaurants"],
-    queryFn: async () => (await supabase.from("restaurants").select("*, users!restaurants_owner_id_fkey(full_name,email)").order("created_at", { ascending: false })).data ?? [],
+    queryFn: async () => (await supabase.from("restaurants").select("*, users!restaurants_owner_id_fkey(full_name,email)").order("status", { ascending: true }).order("created_at", { ascending: false })).data ?? [],
   });
   const setStatus = async (id: string, status: string) => {
     await supabase.from("restaurants").update({ status: status as any }).eq("id", id);
     qc.invalidateQueries({ queryKey: ["admin-restaurants"] }); onChange();
     toast.success(`Status: ${status}`);
   };
-  return (
-    <div className="space-y-3">
-      {data.map((r: any) => (
-        <div key={r.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-4">
-          <div>
-            <div className="font-semibold">{r.name} <Badge variant="secondary" className="ml-2">{r.status}</Badge></div>
-            <div className="text-xs text-muted-foreground">{r.users?.full_name} · {r.phone} · {r.address}</div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <MenuOCRUpload restaurantId={r.id} restaurantName={r.name} onSuccess={() => qc.invalidateQueries({ queryKey: ["admin-restaurants"] })} />
-            {r.status !== "active" && <Button size="sm" onClick={() => setStatus(r.id, "active")} className="gap-1"><Check className="h-4 w-4" />Approve</Button>}
-            {r.status !== "suspended" && <Button size="sm" variant="outline" onClick={() => setStatus(r.id, "suspended")} className="gap-1"><X className="h-4 w-4" />Suspend</Button>}
+  
+  // Separate pending from approved/suspended
+  const pending = data.filter((r: any) => r.status === "pending");
+  const approved = data.filter((r: any) => r.status === "active");
+  const suspended = data.filter((r: any) => r.status === "suspended");
+
+  const renderRestaurants = (restaurants: any[], title: string) => (
+    <>
+      {restaurants.length > 0 && (
+        <div>
+          <h3 className="mb-2 font-semibold text-sm text-muted-foreground">{title} ({restaurants.length})</h3>
+          <div className="space-y-3">
+            {restaurants.map((r: any) => (
+              <div key={r.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-4">
+                <div>
+                  <div className="font-semibold">{r.name} <Badge variant="secondary" className="ml-2">{r.status}</Badge></div>
+                  <div className="text-xs text-muted-foreground">{r.users?.full_name} · {r.phone} · {r.address}</div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <MenuOCRUpload restaurantId={r.id} restaurantName={r.name} onSuccess={() => qc.invalidateQueries({ queryKey: ["admin-restaurants"] })} />
+                  {r.status !== "active" && <Button size="sm" onClick={() => setStatus(r.id, "active")} className="gap-1"><Check className="h-4 w-4" />Approve</Button>}
+                  {r.status !== "suspended" && <Button size="sm" variant="outline" onClick={() => setStatus(r.id, "suspended")} className="gap-1"><X className="h-4 w-4" />Suspend</Button>}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      ))}
+      )}
+    </>
+  );
+
+  return (
+    <div className="space-y-6">
+      {renderRestaurants(pending, "Pending Approval")}
+      {renderRestaurants(approved, "Active")}
+      {renderRestaurants(suspended, "Suspended")}
     </div>
   );
 }

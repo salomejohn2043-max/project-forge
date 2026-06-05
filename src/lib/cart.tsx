@@ -42,6 +42,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [state]);
 
   const add: CartCtx["add"] = (restaurantId, restaurantName, item) => {
+    // Validate prices are positive and reasonable
+    if (item.base_price <= 0 || item.marked_up_price <= 0) {
+      console.error("Invalid item prices");
+      return false;
+    }
+
     if (state.restaurant_id && state.restaurant_id !== restaurantId && state.items.length > 0) {
       const ok = typeof window !== "undefined"
         ? window.confirm(`Your cart has items from ${state.restaurant_name}. Start a new order from ${restaurantName}?`)

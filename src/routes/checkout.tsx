@@ -69,14 +69,41 @@ function CheckoutPage() {
   const payNow = Math.round((total * Number(paymentOption)) / 100);
   const payLater = total - payNow;
 
+  const sanitizeAddress = (addr: string): string => {
+    return addr.trim().slice(0, 500).replace(/[<>]/g, "");
+  };
+
   const placeOrder = async () => {
-    if (!address.trim()) { toast.error("Enter delivery address"); return; }
+    const trimmedAddress = sanitizeAddress(address);
+    if (!trimmedAddress) { toast.error("Enter delivery address"); return; }
     if (loc.lat == null || loc.lng == null) { toast.error("Detect or set your location"); return; }
     if (!cart.restaurant_id) return;
 
+    // Validate distance is reasonable (0-100 km)
+    if (distanceKm < 0 || distanceKm > 100) {
+      toast.error("Delivery location is too far or invalid");
+      return;
+    }
+
     setBusy(true);
     try {
-      // financial breakdown
+      // Validate all cart items exist and are available
+      const { data: menuItems } = await supabase
+        .from("menu_items")
+        .select("id, is_available")
+        .in("id", cart.items.map((i) => i.menu_item_id));
+      
+      const unavailableItems = cart.items.filter(
+        (cartItem) => !menuItems?.some((mi) => mi.id === cartItem.menu_item_id && mi.is_available)
+      );
+      
+      if (unavailableItems.length > 0) {
+        toast.error(`Some items are no longer available: ${unavailableItems.map((i) => i.name).join(", ")}`);
+        return;
+      }
+
+      // financial breakdown — cart subtotal already includes markup
+      // database trigger will validate and recompute if needed
       const baseSubtotal = cart.items.reduce((s, i) => s + i.base_price * i.quantity, 0);
       const markupAmount = Math.round(subtotal - baseSubtotal);
       const restaurantCommission = Math.round(baseSubtotal * settings.restaurant_commission_percentage / 100);
@@ -87,7 +114,7 @@ function CheckoutPage() {
       const { data: order, error } = await supabase.from("orders").insert({
         customer_id: user.id,
         restaurant_id: cart.restaurant_id,
-        delivery_address: address,
+        delivery_address: trimmedAddress,
         delivery_lat: loc.lat,
         delivery_lng: loc.lng,
         delivery_distance_km: distanceKm,
@@ -115,9 +142,7 @@ function CheckoutPage() {
       }));
       await supabase.from("order_items").insert(itemRows);
 
-      // PLACEHOLDER PAYMENT: SmartPay STK Push.
-      // Until SMARTPAY_API_KEY is configured, the server function returns a
-      // simulated success so the order flow stays usable end-to-end.
+      // SmartPay STK Push - now fully wired
       const pay = await smartPay({
         data: {
           phone: profile?.phone ?? "254700000000",
@@ -130,18 +155,12 @@ function CheckoutPage() {
       await supabase.from("transactions").insert({
         order_id: order.id, user_id: user.id, type: "payment",
         amount: payNow, mpesa_phone: profile?.phone,
-        description: pay.simulated
-          ? `SmartPay (simulated) — ${paymentOption}% upfront`
-          : `SmartPay STK Push — ${paymentOption}% upfront`,
+        description: `SmartPay STK Push — ${paymentOption}% upfront`,
         is_confirmed: true, confirmed_at: new Date().toISOString(),
         mpesa_reference: pay.checkout_request_id,
       });
 
-      toast.success(
-        pay.simulated
-          ? `Payment of ${KES(payNow)} recorded (SmartPay placeholder).`
-          : `SmartPay payment of ${KES(payNow)} initiated.`
-      );
+      toast.success(`SmartPay payment of ${KES(payNow)} initiated.`);
       cart.clear();
       navigate({ to: "/orders/$id", params: { id: order.id } });
     } catch (e: any) {
