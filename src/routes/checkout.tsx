@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { useAuth } from "@/lib/auth";
 import { getSettings, KES } from "@/lib/settings";
 import { LocationPicker } from "@/components/location-picker";
 import { haversineKm } from "@/lib/geo";
+import { initiateSmartPayPush } from "@/lib/payments/smartpay.functions";
 
 export const Route = createFileRoute("/checkout")({ component: CheckoutPage });
 
@@ -19,6 +21,7 @@ function CheckoutPage() {
   const cart = useCart();
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const smartPay = useServerFn(initiateSmartPayPush);
   const [address, setAddress] = useState("");
   const [loc, setLoc] = useState<{ lat: number | null; lng: number | null; name: string }>({ lat: null, lng: null, name: "" });
   const [restLoc, setRestLoc] = useState<{ lat: number | null; lng: number | null }>({ lat: null, lng: null });
@@ -112,15 +115,33 @@ function CheckoutPage() {
       }));
       await supabase.from("order_items").insert(itemRows);
 
-      await supabase.from("transactions").insert({
-        order_id: order.id, user_id: user.id, type: "payment",
-        amount: payNow, mpesa_phone: profile.phone,
-        description: `M-Pesa STK Push — ${paymentOption}% upfront`,
-        is_confirmed: true, confirmed_at: new Date().toISOString(),
-        mpesa_reference: `MPK${Date.now()}`,
+      // PLACEHOLDER PAYMENT: SmartPay STK Push.
+      // Until SMARTPAY_API_KEY is configured, the server function returns a
+      // simulated success so the order flow stays usable end-to-end.
+      const pay = await smartPay({
+        data: {
+          phone: profile?.phone ?? "254700000000",
+          amount: payNow,
+          accountReference: `ORDER-${order.id.slice(0, 8)}`,
+          description: `Kisii Eats — ${paymentOption}% upfront`,
+        },
       });
 
-      toast.success(`M-Pesa payment of ${KES(payNow)} confirmed!`);
+      await supabase.from("transactions").insert({
+        order_id: order.id, user_id: user.id, type: "payment",
+        amount: payNow, mpesa_phone: profile?.phone,
+        description: pay.simulated
+          ? `SmartPay (simulated) — ${paymentOption}% upfront`
+          : `SmartPay STK Push — ${paymentOption}% upfront`,
+        is_confirmed: true, confirmed_at: new Date().toISOString(),
+        mpesa_reference: pay.checkout_request_id,
+      });
+
+      toast.success(
+        pay.simulated
+          ? `Payment of ${KES(payNow)} recorded (SmartPay placeholder).`
+          : `SmartPay payment of ${KES(payNow)} initiated.`
+      );
       cart.clear();
       navigate({ to: "/orders/$id", params: { id: order.id } });
     } catch (e: any) {
