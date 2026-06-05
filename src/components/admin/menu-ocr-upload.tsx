@@ -16,6 +16,11 @@ interface OCRMenuItem {
   category: string;
 }
 
+type ExtractedMenuCategory = {
+  name: string;
+  items: Array<{ name: string; description?: string; price?: number }>;
+};
+
 function groupItemsByCategory(items: OCRMenuItem[]): Record<string, OCRMenuItem[]> {
   return items.reduce(
     (acc, item) => {
@@ -68,8 +73,9 @@ export function MenuOCRUpload({ restaurantId, restaurantName, onSuccess }: MenuO
     try {
       const imageBase64 = await fileToBase64(selectedFile);
       const result = await extractMenu({ data: { imageBase64, mimeType: selectedFile.type || "image/jpeg" } });
-      const items = result.categories.flatMap((category) =>
-        category.items.map((item) => ({ ...item, category: category.name }))
+      const categories = result.categories as ExtractedMenuCategory[];
+      const items = categories.flatMap((category) =>
+        category.items.map((item): OCRMenuItem => ({ ...item, category: category.name }))
       );
       if (items.length > 0) {
         setParsedItems(items);
