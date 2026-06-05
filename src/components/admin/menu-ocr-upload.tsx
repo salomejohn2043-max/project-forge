@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { parseMenuImage, groupItemsByCategory, type OCRMenuItem } from "@/lib/ocr.client";
+import { parseMenuImage, groupItemsByCategory, type OCRMenuItem } from "@/lib/ocr";
 import { Input } from "@/components/ui/input";
 
 interface MenuOCRUploadProps {
