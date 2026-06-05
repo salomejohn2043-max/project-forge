@@ -1,0 +1,83 @@
+# Cloudflare Wrangler Configuration
+# TanStack Start + Supabase + SmartPay
+
+name = "project-forge"
+type = "javascript"
+main = "dist/server/index.js"
+compatibility_date = "2026-06-05"
+
+# ============================================================
+# ENVIRONMENT & OBSERVABILITY
+# ============================================================
+env = "production"
+observability = { enabled = true }
+
+# ============================================================
+# NODEJS COMPATIBILITY
+# ============================================================
+compatibility_flags = [
+  "nodejs_compat",
+  "nodejs_compat_v2"
+]
+
+# ============================================================
+# BUILD CONFIGURATION
+# ============================================================
+build = {
+  command = "bun run build",
+  cwd = ".",
+  watch_paths = ["src/**/*.ts", "src/**/*.tsx"]
+}
+
+# ============================================================
+# ENVIRONMENT VARIABLES
+# ============================================================
+# These are set in Cloudflare Pages/Workers dashboard
+[env.production]
+vars = { ENVIRONMENT = "production" }
+
+[env.staging]
+vars = { ENVIRONMENT = "staging" }
+
+# ============================================================
+# KV NAMESPACE (optional - for caching)
+# ============================================================
+[[kv_namespaces]]
+binding = "CACHE"
+id = "project-forge-cache"
+preview_id = "project-forge-cache-preview"
+
+# ============================================================
+# DURABLE OBJECTS (optional - for real-time features)
+# ============================================================
+# [[durable_objects.bindings]]
+# name = "ORDERS"
+# class_name = "OrdersObject"
+# script_name = "project-forge"
+
+# ============================================================
+# ANALYTICS ENGINE (for monitoring)
+# ============================================================
+analytics = { enabled = true }
+
+# ============================================================
+# ROUTES & DEPLOYMENT
+# ============================================================
+routes = [
+  { pattern = "example.com/*", zone_name = "example.com" }
+]
+
+zone_id = ""
+
+# ============================================================
+# TRIGGERS (for cron jobs)
+# ============================================================
+[triggers]
+crons = ["0 * * * *"]  # Every hour for group order reconciliation
+
+# ============================================================
+# TAIL (for real-time logs)
+# ============================================================
+[tail]
+enabled = true
+format = "json"

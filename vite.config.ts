@@ -12,11 +12,8 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
-  vite: {
-    plugins: [],
-    // Wrangler/Cloudflare Workers support
-    ssr: {
-      external: ["@supabase/supabase-js"],
-    },
+  plugins: [],  // ✅ Top-level plugins array required by Wrangler
+  ssr: {
+    external: ["@supabase/supabase-js"],  // Prevent bundling Supabase
   },
 });
