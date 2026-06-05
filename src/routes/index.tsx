@@ -65,9 +65,9 @@ function HomePage() {
     queryKey: ["restaurants"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("restaurants")
+        .from("restaurant_public")
         .select("id,name,description,logo_url,cover_image_url,address,lat,lng,is_open,average_rating")
-        .eq("status", "active");
+        .order("name");
       if (error) throw error;
       return data as Restaurant[];
     },
