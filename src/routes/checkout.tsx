@@ -28,7 +28,10 @@ function CheckoutPage() {
   const [paymentOption, setPaymentOption] = useState<"30" | "50" | "100">("100");
   const [deliveryFee, setDeliveryFee] = useState(50);
   const [busy, setBusy] = useState(false);
+  const [mpesaPhone, setMpesaPhone] = useState("");
   const [settings, setSettings] = useState({ markup_percentage: 10, restaurant_commission_percentage: 5, rider_commission_percentage: 5, delivery_fee_per_km: 30, min_delivery_fee: 50 });
+
+  useEffect(() => { if (profile?.phone && !mpesaPhone) setMpesaPhone(profile.phone); }, [profile?.phone]);
 
   // pull restaurant location
   useEffect(() => {
