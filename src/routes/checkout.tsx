@@ -155,10 +155,9 @@ function CheckoutPage() {
       }));
       await supabase.from("order_items").insert(itemRows);
 
-      // SmartPay STK Push - now fully wired
       const pay = await smartPay({
         data: {
-          phone: profile?.phone ?? "254700000000",
+          phone: normalized,
           amount: payNow,
           accountReference: `ORDER-${order.id.slice(0, 8)}`,
           description: `Kisii Eats — ${paymentOption}% upfront`,
@@ -167,13 +166,13 @@ function CheckoutPage() {
 
       await supabase.from("transactions").insert({
         order_id: order.id, user_id: user.id, type: "payment",
-        amount: payNow, mpesa_phone: profile?.phone,
+        amount: payNow, mpesa_phone: normalized,
         description: `SmartPay STK Push — ${paymentOption}% upfront`,
         is_confirmed: true, confirmed_at: new Date().toISOString(),
         mpesa_reference: pay.checkout_request_id,
       });
 
-      toast.success(`SmartPay payment of ${KES(payNow)} initiated.`);
+      toast.success(`STK push sent to ${normalized}. Check your phone to confirm ${KES(payNow)}.`);
       cart.clear();
       navigate({ to: "/orders/$id", params: { id: order.id } });
     } catch (e: any) {
