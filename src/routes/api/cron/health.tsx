@@ -4,8 +4,7 @@
  * Path: /api/cron/health
  */
 
-import { json } from '@tanstack/start';
-import { performCronHealthCheck, cronResponse } from '../../lib/cron';
+import { performCronHealthCheck, cronResponse } from '@/lib/cron';
 
 export async function GET() {
   try {
