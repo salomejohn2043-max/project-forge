@@ -76,11 +76,21 @@ function CheckoutPage() {
     return addr.trim().slice(0, 500).replace(/[<>]/g, "");
   };
 
+  const normalizePhone = (raw: string): string | null => {
+    const digits = raw.replace(/\D/g, "");
+    if (/^254[17]\d{8}$/.test(digits)) return digits;
+    if (/^0[17]\d{8}$/.test(digits)) return "254" + digits.slice(1);
+    if (/^[17]\d{8}$/.test(digits)) return "254" + digits;
+    return null;
+  };
+
   const placeOrder = async () => {
     const trimmedAddress = sanitizeAddress(address);
     if (!trimmedAddress) { toast.error("Enter delivery address"); return; }
     if (loc.lat == null || loc.lng == null) { toast.error("Detect or set your location"); return; }
     if (!cart.restaurant_id) return;
+    const normalized = normalizePhone(mpesaPhone);
+    if (!normalized) { toast.error("Enter a valid M-Pesa number (e.g. 0712345678)"); return; }
 
     // Validate distance is reasonable (0-100 km)
     if (distanceKm < 0 || distanceKm > 100) {
