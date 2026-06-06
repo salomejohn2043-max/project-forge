@@ -28,7 +28,10 @@ function CheckoutPage() {
   const [paymentOption, setPaymentOption] = useState<"30" | "50" | "100">("100");
   const [deliveryFee, setDeliveryFee] = useState(50);
   const [busy, setBusy] = useState(false);
+  const [mpesaPhone, setMpesaPhone] = useState("");
   const [settings, setSettings] = useState({ markup_percentage: 10, restaurant_commission_percentage: 5, rider_commission_percentage: 5, delivery_fee_per_km: 30, min_delivery_fee: 50 });
+
+  useEffect(() => { if (profile?.phone && !mpesaPhone) setMpesaPhone(profile.phone); }, [profile?.phone]);
 
   // pull restaurant location
   useEffect(() => {
@@ -73,11 +76,21 @@ function CheckoutPage() {
     return addr.trim().slice(0, 500).replace(/[<>]/g, "");
   };
 
+  const normalizePhone = (raw: string): string | null => {
+    const digits = raw.replace(/\D/g, "");
+    if (/^254[17]\d{8}$/.test(digits)) return digits;
+    if (/^0[17]\d{8}$/.test(digits)) return "254" + digits.slice(1);
+    if (/^[17]\d{8}$/.test(digits)) return "254" + digits;
+    return null;
+  };
+
   const placeOrder = async () => {
     const trimmedAddress = sanitizeAddress(address);
     if (!trimmedAddress) { toast.error("Enter delivery address"); return; }
     if (loc.lat == null || loc.lng == null) { toast.error("Detect or set your location"); return; }
     if (!cart.restaurant_id) return;
+    const normalized = normalizePhone(mpesaPhone);
+    if (!normalized) { toast.error("Enter a valid M-Pesa number (e.g. 0712345678)"); return; }
 
     // Validate distance is reasonable (0-100 km)
     if (distanceKm < 0 || distanceKm > 100) {
@@ -142,10 +155,9 @@ function CheckoutPage() {
       }));
       await supabase.from("order_items").insert(itemRows);
 
-      // SmartPay STK Push - now fully wired
       const pay = await smartPay({
         data: {
-          phone: profile?.phone ?? "254700000000",
+          phone: normalized,
           amount: payNow,
           accountReference: `ORDER-${order.id.slice(0, 8)}`,
           description: `Kisii Eats — ${paymentOption}% upfront`,
@@ -154,13 +166,13 @@ function CheckoutPage() {
 
       await supabase.from("transactions").insert({
         order_id: order.id, user_id: user.id, type: "payment",
-        amount: payNow, mpesa_phone: profile?.phone,
+        amount: payNow, mpesa_phone: normalized,
         description: `SmartPay STK Push — ${paymentOption}% upfront`,
         is_confirmed: true, confirmed_at: new Date().toISOString(),
         mpesa_reference: pay.checkout_request_id,
       });
 
-      toast.success(`SmartPay payment of ${KES(payNow)} initiated.`);
+      toast.success(`STK push sent to ${normalized}. Check your phone to confirm ${KES(payNow)}.`);
       cart.clear();
       navigate({ to: "/orders/$id", params: { id: order.id } });
     } catch (e: any) {
@@ -194,6 +206,18 @@ function CheckoutPage() {
 
           <section className="rounded-xl border bg-card p-4">
             <h2 className="mb-3 font-semibold">Payment</h2>
+            <div className="mb-4 space-y-1.5">
+              <Label htmlFor="mpesa">M-Pesa phone number</Label>
+              <Input
+                id="mpesa"
+                type="tel"
+                inputMode="tel"
+                value={mpesaPhone}
+                onChange={(e) => setMpesaPhone(e.target.value)}
+                placeholder="07XX XXX XXX"
+              />
+              <p className="text-xs text-muted-foreground">STK push will be sent to this number to confirm payment.</p>
+            </div>
             <RadioGroup value={paymentOption} onValueChange={(v) => setPaymentOption(v as any)} className="space-y-2">
               {(["30", "50", "100"] as const).map((opt) => (
                 <label key={opt} className="flex cursor-pointer items-center justify-between rounded-lg border p-3 has-[:checked]:border-primary has-[:checked]:bg-primary/5">

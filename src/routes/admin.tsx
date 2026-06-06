@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Check, X, Eye, Zap } from "lucide-react";
+import { Check, X, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "@/components/app-header";
 import { RequireRole } from "@/components/require-role";
@@ -14,7 +14,6 @@ import { KES } from "@/lib/settings";
 import { statusLabel } from "@/lib/format";
 import { clearSettingsCache } from "@/lib/settings";
 import { useState } from "react";
-import { MenuOCRUpload } from "@/components/admin/menu-ocr-upload";
 import { RiderLiveMap } from "@/components/admin/rider-live-map";
 import { OrderDetailModal } from "@/components/admin/order-detail-modal";
 
@@ -140,7 +139,6 @@ function RestaurantsTab({ onChange }: { onChange: () => void }) {
                   <div className="text-xs text-muted-foreground">{r.users?.full_name} · {r.phone} · {r.address}</div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <MenuOCRUpload restaurantId={r.id} restaurantName={r.name} onSuccess={() => qc.invalidateQueries({ queryKey: ["admin-restaurants"] })} />
                   {r.status !== "active" && <Button size="sm" onClick={() => setStatus(r.id, "active")} className="gap-1"><Check className="h-4 w-4" />Approve</Button>}
                   {r.status !== "suspended" && <Button size="sm" variant="outline" onClick={() => setStatus(r.id, "suspended")} className="gap-1"><X className="h-4 w-4" />Suspend</Button>}
                 </div>

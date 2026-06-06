@@ -3,7 +3,11 @@
  * Secure, monitored, and scalable cron job execution for SaaS platform
  */
 
-import { json } from '@tanstack/start';
+const json = (data: any, init?: ResponseInit) =>
+  new Response(JSON.stringify(data), {
+    ...init,
+    headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
+  });
 
 // Types
 interface CronRequest {
