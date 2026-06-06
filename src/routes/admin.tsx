@@ -139,7 +139,6 @@ function RestaurantsTab({ onChange }: { onChange: () => void }) {
                   <div className="text-xs text-muted-foreground">{r.users?.full_name} · {r.phone} · {r.address}</div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <MenuOCRUpload restaurantId={r.id} restaurantName={r.name} onSuccess={() => qc.invalidateQueries({ queryKey: ["admin-restaurants"] })} />
                   {r.status !== "active" && <Button size="sm" onClick={() => setStatus(r.id, "active")} className="gap-1"><Check className="h-4 w-4" />Approve</Button>}
                   {r.status !== "suspended" && <Button size="sm" variant="outline" onClick={() => setStatus(r.id, "suspended")} className="gap-1"><X className="h-4 w-4" />Suspend</Button>}
                 </div>
