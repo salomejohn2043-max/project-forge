@@ -206,6 +206,18 @@ function CheckoutPage() {
 
           <section className="rounded-xl border bg-card p-4">
             <h2 className="mb-3 font-semibold">Payment</h2>
+            <div className="mb-4 space-y-1.5">
+              <Label htmlFor="mpesa">M-Pesa phone number</Label>
+              <Input
+                id="mpesa"
+                type="tel"
+                inputMode="tel"
+                value={mpesaPhone}
+                onChange={(e) => setMpesaPhone(e.target.value)}
+                placeholder="07XX XXX XXX"
+              />
+              <p className="text-xs text-muted-foreground">STK push will be sent to this number to confirm payment.</p>
+            </div>
             <RadioGroup value={paymentOption} onValueChange={(v) => setPaymentOption(v as any)} className="space-y-2">
               {(["30", "50", "100"] as const).map((opt) => (
                 <label key={opt} className="flex cursor-pointer items-center justify-between rounded-lg border p-3 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
